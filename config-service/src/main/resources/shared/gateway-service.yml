@@ -1,0 +1,27 @@
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: account-service
+              uri: lb://account-service
+              predicates:
+                - Path=/accounts/**
+          httpclient:
+            connect-timeout: 3000
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,env
+  endpoint:
+    gateway:
+      access: read-only
+    health:
+      probes:
+        enabled: true
