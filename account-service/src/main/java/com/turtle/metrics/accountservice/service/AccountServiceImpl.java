@@ -1,0 +1,91 @@
+package com.turtle.metrics.accountservice.service;
+
+import com.turtle.metrics.accountservice.model.Account;
+import com.turtle.metrics.accountservice.model.Currency;
+import com.turtle.metrics.accountservice.model.Saving;
+import com.turtle.metrics.accountservice.model.User;
+import com.turtle.metrics.accountservice.repository.AccountRepository;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
+
+import java.math.BigDecimal;
+import java.util.Date;
+
+@Service
+@RequiredArgsConstructor
+public class AccountServiceImpl implements AccountService{
+
+    private final AccountRepository accountRepository;
+
+    private final Logger log = LoggerFactory.getLogger(AccountServiceImpl.class);
+
+    @Override
+    public Account findByName(String name) {
+        Assert.hasLength(name, "Name must not be empty");
+        return accountRepository.findByName(name)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found " + name));
+    }
+
+    @Override
+    public Account create(User user) {
+        Assert.notNull(user, "User must not be null");
+        Assert.hasText(user.getUsername(), "Username must not be empty");
+
+        accountRepository.findByName(user.getUsername())
+                .ifPresent(account -> {
+                    throw new IllegalArgumentException("Account already exists " + user.getUsername());
+                });
+
+        //authClient.createUser(user);
+
+        Account account = buildNewAccount(user.getUsername());
+        accountRepository.save(account);
+
+        log.atInfo().log("Created account " + account);
+        return account;
+    }
+
+    @Override
+    public void saveChanges(String name, Account update) {
+        Assert.notNull(update, "updated account must not be null");
+        Assert.hasText(name, "name must not be empty");
+
+        Account account = accountRepository.findByName(name)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found " + name));
+
+        applyChanges(account, update);
+
+        accountRepository.save(account);
+
+        log.atInfo().log("Account {} changes have been updated", name);
+
+        //statisticsClient.updateStatistics(name, account);
+    }
+
+    private Account buildNewAccount(String username) {
+        Saving saving = new Saving();
+        saving.setAmount(BigDecimal.ZERO);
+        saving.setCurrency(Currency.getDefault());
+        saving.setInterest(BigDecimal.ZERO);
+        saving.setDeposit(false);
+        saving.setCapitalization(false);
+
+        Account account = new Account();
+        account.setName(username);
+        account.setLastSeen(new Date());
+        account.setSaving(saving);
+
+        return account;
+    }
+
+    private void applyChanges(Account target, Account update) {
+        target.setIncomes(update.getIncomes());
+        target.setExpenses(update.getExpenses());
+        target.setSaving(update.getSaving());
+        target.setNote(update.getNote());
+        target.setLastSeen(new Date());
+    }
+}
