@@ -1,19 +1,42 @@
 package com.turtle.metrics.accountservice.controller;
 
 import com.turtle.metrics.accountservice.model.Account;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.turtle.metrics.accountservice.model.User;
+import com.turtle.metrics.accountservice.service.AccountService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
+import java.security.Principal;
 
 @RestController
 @RequestMapping("/accounts")
+@RequiredArgsConstructor
 public class AccountController {
 
+    private final AccountService accountService;
+
     @GetMapping("/{name}")
-    public Account getAccount(@PathVariable String name) {
-        return new Account(name, BigDecimal.valueOf(1000));
+    public ResponseEntity<Account> getAccountByName(@PathVariable String name) {
+        return ResponseEntity.ok(accountService.findByName(name));
+    }
+
+    @GetMapping("/current")
+    public ResponseEntity<Account> getCurrentAccount(Principal principal) {
+        return ResponseEntity.ok(accountService.findByName(principal.getName()));
+    }
+
+    @PutMapping("/current")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveCurrentAccount(Principal principal, @RequestBody Account account) {
+        accountService.saveChanges(principal.getName(), account);
+    }
+
+    @PostMapping
+    public ResponseEntity<Account> createNewAccount(@RequestBody User user) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(accountService.create(user));
     }
 }
