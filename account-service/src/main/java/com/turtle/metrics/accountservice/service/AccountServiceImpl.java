@@ -1,5 +1,7 @@
 package com.turtle.metrics.accountservice.service;
 
+import com.turtle.metrics.accountservice.exception.AccountAlreadyExistsException;
+import com.turtle.metrics.accountservice.exception.AccountNotFoundException;
 import com.turtle.metrics.accountservice.model.Account;
 import com.turtle.metrics.accountservice.model.Currency;
 import com.turtle.metrics.accountservice.model.Saving;
@@ -26,7 +28,7 @@ public class AccountServiceImpl implements AccountService{
     public Account findByName(String name) {
         Assert.hasLength(name, "Name must not be empty");
         return accountRepository.findByName(name)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found " + name));
+                .orElseThrow(() -> new AccountNotFoundException(name));
     }
 
     @Override
@@ -36,7 +38,7 @@ public class AccountServiceImpl implements AccountService{
 
         accountRepository.findByName(user.getUsername())
                 .ifPresent(account -> {
-                    throw new IllegalArgumentException("Account already exists " + user.getUsername());
+                    throw new AccountAlreadyExistsException(user.getUsername());
                 });
 
         //authClient.createUser(user);
@@ -54,7 +56,7 @@ public class AccountServiceImpl implements AccountService{
         Assert.hasText(name, "name must not be empty");
 
         Account account = accountRepository.findByName(name)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found " + name));
+                .orElseThrow(() -> new AccountNotFoundException(name));
 
         applyChanges(account, update);
 
