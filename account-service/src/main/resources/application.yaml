@@ -7,10 +7,27 @@ spring:
     name: account-service
   config:
     import: optional:configserver:http://localhost:8888
-  mongodb:
-    uri: mongodb://localhost:27017/account-service
+  #mongodb:
+   #uri: mongodb://localhost:27017/account-service
 
 eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      statisticsService:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+
+  retry:
+    instances:
+      statisticsService:
+        max-attempts: 3
+        wait-duration: 500ms
+        retry-exceptions:
+          - feign.RetryableException

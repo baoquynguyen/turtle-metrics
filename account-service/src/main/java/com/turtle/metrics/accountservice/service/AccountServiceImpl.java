@@ -1,5 +1,6 @@
 package com.turtle.metrics.accountservice.service;
 
+import com.turtle.metrics.accountservice.client.StatisticsServiceClient;
 import com.turtle.metrics.accountservice.exception.AccountAlreadyExistsException;
 import com.turtle.metrics.accountservice.exception.AccountNotFoundException;
 import com.turtle.metrics.accountservice.model.Account;
@@ -7,9 +8,10 @@ import com.turtle.metrics.accountservice.model.Currency;
 import com.turtle.metrics.accountservice.model.Saving;
 import com.turtle.metrics.accountservice.model.User;
 import com.turtle.metrics.accountservice.repository.AccountRepository;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -18,11 +20,12 @@ import java.util.Date;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AccountServiceImpl implements AccountService{
 
     private final AccountRepository accountRepository;
 
-    private final Logger log = LoggerFactory.getLogger(AccountServiceImpl.class);
+    private final StatisticsServiceClient statisticsServiceClient;
 
     @Override
     public Account findByName(String name) {
@@ -46,7 +49,7 @@ public class AccountServiceImpl implements AccountService{
         Account account = buildNewAccount(user.getUsername());
         accountRepository.save(account);
 
-        log.atInfo().log("Created account " + account);
+        log.info("Created account {}", account);
         return account;
     }
 
@@ -62,9 +65,9 @@ public class AccountServiceImpl implements AccountService{
 
         accountRepository.save(account);
 
-        log.atInfo().log("Account {} changes have been updated", name);
+        log.info("Account {} changes have been updated", name);
 
-        //statisticsClient.updateStatistics(name, account);
+        updateStatisticsSafely(name, account);
     }
 
     private Account buildNewAccount(String username) {
@@ -89,5 +92,15 @@ public class AccountServiceImpl implements AccountService{
         target.setSaving(update.getSaving());
         target.setNote(update.getNote());
         target.setLastSeen(new Date());
+    }
+
+    @Retry(name = "statisticsService")
+    @CircuitBreaker(name = "statisticsService", fallbackMethod = "statisticsFallback")
+    private void updateStatisticsSafely(String name, Account account){
+        statisticsServiceClient.updateStatistics(name, account);
+    }
+
+    private void statisticsFallback(String name, Account account, Throwable ex) {
+        log.error("Statistics update failed for account {}. Will retry later", name, ex);
     }
 }
