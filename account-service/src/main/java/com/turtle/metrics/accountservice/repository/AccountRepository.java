@@ -1,13 +1,13 @@
 package com.turtle.metrics.accountservice.repository;
 
 import com.turtle.metrics.accountservice.model.Account;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
 @Repository
-public interface AccountRepository extends CrudRepository<Account, String> {
+public interface AccountRepository extends JpaRepository<Account, Long> {
 
     Optional<Account> findByName(String name);
 }
