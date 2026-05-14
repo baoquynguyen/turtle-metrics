@@ -1,7 +1,18 @@
 spring:
-  data:
-    mongodb:
-      uri: mongodb://localhost:27017/account-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/accountdb
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update   #use for dev (validate use for PROD)
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
 
 eureka:
   client:
