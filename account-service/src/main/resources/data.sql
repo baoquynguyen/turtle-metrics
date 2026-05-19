@@ -2,9 +2,9 @@ INSERT INTO accounts (
     id,
     name,
     last_seen,
-    saving_amount,
-    saving_interest,
-    saving_deposit,
+    amount,
+    interest,
+    deposit,
     note
 )
 VALUES
@@ -23,7 +23,7 @@ VALUES
         NOW(),
         8200.00,
         3.20,
-        'EUR',
+        false,
         'Travel savings account'
     );
 

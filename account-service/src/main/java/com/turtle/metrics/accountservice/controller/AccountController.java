@@ -1,5 +1,6 @@
 package com.turtle.metrics.accountservice.controller;
 
+import com.turtle.metrics.accountservice.dto.AccountResponse;
 import com.turtle.metrics.accountservice.model.Account;
 import com.turtle.metrics.accountservice.model.User;
 import com.turtle.metrics.accountservice.service.AccountService;
@@ -18,12 +19,12 @@ public class AccountController {
     private final AccountService accountService;
 
     @GetMapping("/{name}")
-    public ResponseEntity<Account> getAccountByName(@PathVariable String name) {
+    public ResponseEntity<AccountResponse> getAccountByName(@PathVariable String name) {
         return ResponseEntity.ok(accountService.findByName(name));
     }
 
     @GetMapping("/current")
-    public ResponseEntity<Account> getCurrentAccount(Principal principal) {
+    public ResponseEntity<AccountResponse> getCurrentAccount(Principal principal) {
         return ResponseEntity.ok(accountService.findByName(principal.getName()));
     }
 
@@ -34,7 +35,7 @@ public class AccountController {
     }
 
     @PostMapping
-    public ResponseEntity<Account> createNewAccount(@RequestBody User user) {
+    public ResponseEntity<AccountResponse> createNewAccount(@RequestBody User user) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(accountService.create(user));
