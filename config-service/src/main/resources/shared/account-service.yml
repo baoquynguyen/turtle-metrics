@@ -9,10 +9,15 @@ spring:
     hibernate:
       ddl-auto: update   #use for dev (validate use for PROD)
     show-sql: true
+    defer-datasource-initialization: true #ensure Hibernate create table then execute schema.sql and data.sql
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+
+  sql:
+    init:
+      mode: always
 
 eureka:
   client:

@@ -1,8 +1,10 @@
 package com.turtle.metrics.accountservice.service;
 
 import com.turtle.metrics.accountservice.client.StatisticsServiceClient;
+import com.turtle.metrics.accountservice.dto.AccountResponse;
 import com.turtle.metrics.accountservice.exception.AccountAlreadyExistsException;
 import com.turtle.metrics.accountservice.exception.AccountNotFoundException;
+import com.turtle.metrics.accountservice.mapper.AccountMapper;
 import com.turtle.metrics.accountservice.model.*;
 import com.turtle.metrics.accountservice.repository.AccountRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -15,26 +17,26 @@ import org.springframework.util.Assert;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AccountServiceImpl implements AccountService{
 
+    private final AccountMapper accountMapper;
     private final AccountRepository accountRepository;
-
     private final StatisticsServiceClient statisticsServiceClient;
 
     @Override
-    public Account findByName(String name) {
+    public AccountResponse findByName(String name) {
         Assert.hasLength(name, "Name must not be empty");
-        return accountRepository.findByName(name)
+        Account account = accountRepository.findByName(name)
                 .orElseThrow(() -> new AccountNotFoundException(name));
+        return accountMapper.toAccountResponse(account);
     }
 
     @Override
-    public Account create(User user) {
+    public AccountResponse create(User user) {
         Assert.notNull(user, "User must not be null");
         Assert.hasText(user.getUsername(), "Username must not be empty");
 
@@ -49,7 +51,7 @@ public class AccountServiceImpl implements AccountService{
         accountRepository.save(account);
 
         log.info("Created account {}", account);
-        return account;
+        return accountMapper.toAccountResponse(account);
     }
 
     @Override
